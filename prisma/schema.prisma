@@ -1,0 +1,56 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique  // Make email unique
+  createdAt DateTime @default(now())
+  bids      Bid[]
+  wonAuctions Auction[] @relation("AuctionWinner")
+}
+
+model Auction {
+  id               Int      @id @default(autoincrement())
+  carId            String
+  // car              Car      @relation("AuctionItem", fields: [carId], references: [id])
+  startTime        DateTime
+  endTime          DateTime
+  startingBid      Int
+  currentHighestBid Int
+  winnerId         Int?
+  winner           User?    @relation("AuctionWinner", fields: [winnerId], references: [id])
+  status           String
+  bids             Bid[]
+  version  Int      @default(0)
+}
+
+model Bid {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  user      User     @relation(fields: [userId], references: [id])
+  auctionId  Int
+  auction   Auction  @relation(fields: [auctionId], references: [id])
+  bidAmount  Int
+  createdAt  DateTime @default(now())
+}
+
+//model Car {
+//  id         Int      @id @default(autoincrement())
+//  name       String
+//  createdAt  DateTime @default(now())
+ // auction    Auction[] @relation("AuctionItem")
+//}

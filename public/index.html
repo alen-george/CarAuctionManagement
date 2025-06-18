@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Auction Live</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    <style>
+      body { font-family: Arial, sans-serif; padding: 2rem; }
+      .bid { font-size: 2rem; color: green; }
+    </style>
+  </head>
+  <body>
+    <h1>Live Auction</h1>
+    <div id="root"></div>
+
+    <script type="text/javascript">
+      const { useState, useEffect } = React;
+
+      function App() {
+        const [token, setToken] = useState('');
+        const [auctionId, setAuctionId] = useState(1);
+        const [highest, setHighest] = useState(null);
+        const [amount, setAmount] = useState('');
+        const [socket, setSocket] = useState(null);
+        const [events, setEvents] = useState([]);
+
+        function connect() {
+          if (!token) { alert('set JWT first'); return; }
+          const s = io('/auction', { auth: { token } });
+          s.emit('joinAuction', { auctionId });
+          s.on('bidPlaced', (data) => {
+            setHighest(data.bidAmount);
+          });
+          s.on('auctionJoined', res => {
+            setHighest(res.currentHighestBid);
+          });
+
+          // collect any events
+          s.onAny((eventName, data) => {
+            setEvents(prev => [...prev, { event: eventName, data }]);
+          });
+
+          setSocket(s);
+        }
+
+        function sendBid() {
+          if (socket) {
+            socket.emit('placeBid', { auctionId, bidAmount: parseInt(amount, 10) });
+          }
+        }
+
+        return (
+          React.createElement('div', null,
+            React.createElement('div', null,
+              'JWT: ', React.createElement('input', { value: token, onChange: e => setToken(e.target.value), size: 60 })
+            ),
+            React.createElement('div', null,
+              'Auction ID: ', React.createElement('input', { value: auctionId, onChange: e => setAuctionId(Number(e.target.value)) })
+            ),
+            React.createElement('button', { onClick: connect }, 'Connect'),
+            highest !== null && React.createElement('p', { className: 'bid' }, `Highest Bid: $${highest}`),
+            socket && React.createElement('div', null,
+              React.createElement('input', { value: amount, onChange: e => setAmount(e.target.value), placeholder: 'Your bid' }),
+              React.createElement('button', { onClick: sendBid }, 'Place Bid')
+            ),
+            events.length > 0 && React.createElement('div', null,
+              React.createElement('h2', null, 'Events'),
+              React.createElement('ul', null,
+                events.slice(-20).map((e, idx) =>
+                  React.createElement('li', { key: idx }, `${e.event}: ${JSON.stringify(e.data)}`)
+                )
+              )
+            )
+          )
+        );
+      }
+
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(React.createElement(App));
+    </script>
+  </body>
+</html>
