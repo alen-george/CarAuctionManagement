@@ -2,8 +2,11 @@
 ## Description
 
 Minimal Car Bidding System where mulitple users can bid
+
 Auction creation is also allowed
+
 Runs React using script to render minimal UI setup
+
 Uses RabbitMQ to process bids and Redis events to broadcast events
 
 ### API Flow
