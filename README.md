@@ -1,7 +1,7 @@
 
 ## Description
 
-Minimal Car Bidding System where mulitple users can bid
+Car Bidding System where mulitple users can bid
 
 Auction creation is also allowed
 
